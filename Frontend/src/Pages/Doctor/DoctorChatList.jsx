@@ -97,7 +97,7 @@ const DoctorChatList = () => {
   }, [profileId]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-hidden">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
         <div className="flex items-center justify-between">
@@ -180,7 +180,7 @@ const DoctorChatList = () => {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-600 truncate flex-1 mr-3">
+                      <p className="text-sm text-gray-600 break-words flex-1 mr-3 overflow-x-hidden">
                         {pat.latestMessage || "Start chatting..."}
                       </p>
 

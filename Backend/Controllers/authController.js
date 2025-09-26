@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendOTPEmail } = require("../Utils/Email");
 const sendEmail = require("../Utils/ContactEmail");
+const crypto = require("crypto");
 
 // Generate 6-digit OTP
 const generateOTP = () =>
@@ -194,6 +195,140 @@ const login = async (req, res) => {
   }
 };
 
+// 📌 Forgot Password
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const emailLower = email.trim().toLowerCase();
+
+    // Check if user exists in Patient or Doctor
+    let user = await Patient.findOne({ email: emailLower });
+    let userType = "patient";
+    if (!user) {
+      user = await Doctor.findOne({ email: emailLower });
+      userType = "doctor";
+    }
+
+    if (!user) {
+      return res.status(404).json({ msg: "No account found with this email" });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    // Store reset token in OTP collection (reuse for simplicity)
+    await OTP.deleteMany({ email: emailLower }); // Clean up any existing
+    await OTP.create({
+      email: emailLower,
+      otp: resetToken, // Using otp field for token
+      expiresAt: resetTokenExpires,
+      tempUser: { userType, userId: user._id }, // Store user info
+    });
+
+    // Send reset email
+    const resetUrl = `${process.env.FRONTEND_URL}/change-password?token=${resetToken}&email=${emailLower}`;
+
+    const nodemailer = require("nodemailer");
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: emailLower,
+        subject: "Password Reset Request - MediPredict",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+            <h2 style="color: #333; text-align: center;">Password Reset Request</h2>
+            <p>You requested a password reset for your MediPredict account.</p>
+            <p>Click the button below to reset your password:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Reset Password</a>
+            </div>
+            <p style="color: #666; font-size: 14px;">This link will expire in 15 minutes for security reasons.</p>
+            <p style="color: #666; font-size: 14px;">If you didn't request this password reset, please ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px; text-align: center;">MediPredict - Your Health Companion</p>
+          </div>
+        `,
+      });
+    } catch (emailError) {
+      console.error("❌ Error sending reset email:", emailError);
+      return res.status(500).json({ msg: "Failed to send reset email" });
+    }
+
+    res.status(200).json({ msg: "Password reset link sent to your email" });
+  } catch (error) {
+    console.error("❌ Forgot Password Error:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// 📌 Change Password
+const changePassword = async (req, res) => {
+  try {
+    const { token, email, password } = req.body;
+    const emailLower = email.trim().toLowerCase();
+
+    // Find the reset token
+    const resetRecord = await OTP.findOne({
+      email: emailLower,
+      otp: token,
+    });
+
+    if (!resetRecord) {
+      return res.status(400).json({ msg: "Invalid or expired reset token" });
+    }
+
+    if (resetRecord.expiresAt < new Date()) {
+      await OTP.deleteOne({ _id: resetRecord._id });
+      return res.status(400).json({ msg: "Reset token has expired" });
+    }
+
+    if (!resetRecord.tempUser || !resetRecord.tempUser.userType || !resetRecord.tempUser.userId) {
+      return res.status(400).json({ msg: "Invalid reset token data" });
+    }
+
+    const { userType, userId } = resetRecord.tempUser;
+
+    // Find and update the user
+    let UserModel;
+    if (userType === "patient") {
+      UserModel = Patient;
+    } else if (userType === "doctor") {
+      UserModel = Doctor;
+    } else {
+      return res.status(400).json({ msg: "Invalid user type" });
+    }
+
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update password
+    user.password = hashedPassword;
+    await user.save();
+
+    // Delete the reset token
+    await OTP.deleteOne({ _id: resetRecord._id });
+
+    res.status(200).json({ msg: "Password changed successfully" });
+  } catch (error) {
+    console.error("❌ Change Password Error:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
 // 📌 Contact Us
 const contactUs = async (req, res) => {
   try {
@@ -251,6 +386,8 @@ module.exports = {
   verifyOTP,
   login,
   resendOTP,
+  forgotPassword,
+  changePassword,
   contactUs,
   getProfile,
   countPatient,

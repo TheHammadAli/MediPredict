@@ -12,8 +12,8 @@ const Appointments = () => {
   const { user } = useContext(AppContext);
 
   useEffect(() => {
-    if (user && user._id) {
-      getDoctorAppointments(user._id);
+    if (user && user.id) {
+      getDoctorAppointments(user.id);
     }
   }, [user, getDoctorAppointments]);
 

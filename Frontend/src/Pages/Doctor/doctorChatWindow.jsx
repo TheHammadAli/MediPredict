@@ -38,6 +38,7 @@ const DoctorChatWindow = () => {
   const [showCallHistory, setShowCallHistory] = useState(false);
   const [callStartTime, setCallStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [callStatus, setCallStatus] = useState("Connecting...");
 
   const fileInputRef = useRef(null);
   const chatEndRef = useRef(null);
@@ -56,6 +57,14 @@ const DoctorChatWindow = () => {
       remoteVideoRef.current.play().catch(console.error);
     }
   }, [remoteStream]);
+
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.muted = true;
+      localVideoRef.current.play().catch(console.error);
+    }
+  }, [localStream]);
 
 
   useEffect(() => {
@@ -190,6 +199,7 @@ const DoctorChatWindow = () => {
       try {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
         setCallStartTime(Date.now());
+        setCallStatus("Connected");
       } catch (err) {
         console.error("[DoctorChatWindow] Error setting remote description for answer:", err);
       }
@@ -333,6 +343,7 @@ const DoctorChatWindow = () => {
         localStreamRef.current = stream;
         setLocalStream(stream);
         if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
           localVideoRef.current.muted = true; // Prevent feedback
           localVideoRef.current.play().catch(console.error);
         }
@@ -433,6 +444,7 @@ const DoctorChatWindow = () => {
     setLocalStream(null); // Clear local stream on call end
     setCallStartTime(null);
     setElapsedTime(0);
+    setCallStatus("Connecting...");
     outgoingRingRef.current.pause();
     outgoingRingRef.current.currentTime = 0;
     incomingRingRef.current.pause();
@@ -470,6 +482,7 @@ const DoctorChatWindow = () => {
     localStreamRef.current = stream;
     setLocalStream(stream);
     if (localVideoRef.current) {
+      localVideoRef.current.srcObject = stream;
       localVideoRef.current.muted = true; // Prevent feedback
       localVideoRef.current.play().catch(console.error);
     }
@@ -524,8 +537,10 @@ const DoctorChatWindow = () => {
 
     if (type === "audio") {
       setShowAudioCallModal(true);
+      setCallStatus("Ringing");
     } else if (type === "video") {
       setShowVideoCallModal(true);
+      setCallStatus("Ringing");
     }
   } catch (err) {
     console.error("[DoctorChatWindow] Error starting call:", err);
@@ -640,7 +655,7 @@ return (
                 className={`flex ${isSender ? "justify-end" : "justify-start"} mb-4`}
               >
                 <div
-                  className={`max-w-xs md:max-w-sm p-4 rounded-2xl text-sm shadow-lg transition-all ${
+                  className={`max-w-xs md:max-w-sm p-4 rounded-2xl text-sm shadow-lg transition-all overflow-x-hidden ${
                     isSender
                       ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-md"
                       : "bg-white text-gray-800 rounded-bl-md border border-gray-200"
@@ -761,18 +776,33 @@ return (
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-fade-in"
         >
-          <div className="bg-white rounded-3xl p-6 w-80 shadow-2xl flex flex-col items-center text-center relative animate-fade-in border border-gray-200">
-            <div className="relative mb-5">
-              <div className="w-24 h-24 bg-blue-500 text-white text-4xl font-bold rounded-full flex items-center justify-center shadow-lg ring-4 ring-blue-300 animate-pulse">
+          <div className="bg-white/95 backdrop-blur-lg rounded-3xl p-8 w-[360px] shadow-2xl flex flex-col items-center text-center border border-white/20 relative">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="relative mb-8 mt-4">
+              <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-5xl font-bold rounded-full flex items-center justify-center shadow-2xl">
                 {patientName?.charAt(0).toUpperCase()}
               </div>
-              <span className="absolute bottom-0 right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></span>
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-semibold">ONLINE</span>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">{patientName}</h3>
-            <p className="text-sm text-gray-500 mb-6">{callStartTime ? formatTime(elapsedTime) : 'Connecting...'}</p>
-            <div className="flex items-center justify-center gap-6">
+
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">{patientName}</h3>
+            <p className="text-gray-500 mb-4 animate-pulse font-medium">Audio Call • {callStatus}</p>
+            {callStatus === "Connected" && (
+              <p className="text-gray-600 mb-4 font-mono text-lg">{formatTime(elapsedTime)}</p>
+            )}
+
+            <div className="flex items-center justify-center gap-8">
               <button
                 onClick={() => {
                   const newMutedState = !isMuted;
@@ -783,23 +813,24 @@ return (
                     console.log("[DoctorChatWindow] Audio track enabled:", audioTrack.enabled);
                   }
                 }}
-                title={isMuted ? "Unmute" : "Mute"}
-                className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md transition ${
-                  isMuted ? "bg-red-500 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 transform hover:scale-110 ${
+                  isMuted
+                    ? "bg-red-500 text-white hover:bg-red-600"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                 }`}
               >
-                {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
+                {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
               </button>
+
               <button
                 onClick={() => {
                   socket.emit("call-cancelled", { toUserId: patientId });
                   socket.emit("end-call", { toUserId: patientId });
                   endCall();
                 }}
-                title="End Call"
-                className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg text-white transition"
+                className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-xl text-white transition-all duration-200 transform hover:scale-110"
               >
-                <PhoneOff size={26} />
+                <PhoneOff size={28} />
               </button>
             </div>
           </div>
@@ -869,6 +900,9 @@ return (
                       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                       screenStreamRef.current = screenStream;
                       setLocalStream(screenStream);
+                      if (localVideoRef.current) {
+                        localVideoRef.current.srcObject = screenStream;
+                      }
                       setIsScreenSharing(true);
                       // Replace video track in peer connection
                       peerConnectionRef.current?.getSenders().forEach(sender => {
@@ -894,6 +928,7 @@ return (
                     localStreamRef.current = camStream; // Update localStreamRef
                     setLocalStream(camStream);
                     if (localVideoRef.current) {
+                      localVideoRef.current.srcObject = camStream;
                       localVideoRef.current.play().catch(console.error);
                     }
                     // Replace video track in peer connection
@@ -929,35 +964,36 @@ return (
 
       {incomingCall && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm transition"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
         >
-          <div className="bg-white/90 backdrop-blur-md rounded-3xl px-6 py-8 shadow-2xl w-[320px] text-center border border-white/20 animate-fade-in">
+          <div className="bg-white rounded-3xl p-8 w-80 shadow-2xl text-center">
             <div className="mb-6">
-              <div className="w-28 h-28 mx-auto rounded-full bg-blue-500 text-white text-5xl font-bold flex items-center justify-center shadow-xl ring-8 ring-blue-300">
+              <div className="w-24 h-24 mx-auto mb-4 bg-blue-500 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
                 {patientName?.charAt(0).toUpperCase()}
               </div>
-              <h2 className="mt-4 text-xl font-semibold text-gray-800">{patientName}</h2>
-              <p className="text-sm text-gray-500 mt-1 animate-pulse">
-                is calling you ({incomingCallType === "audio" ? "Audio" : "Video"})
-              </p>
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">Incoming Call</h2>
+              <p className="text-lg text-gray-600">{patientName}</p>
+              <p className="text-sm text-gray-500">{incomingCallType === "audio" ? "Audio Call" : "Video Call"}</p>
             </div>
-            <div className="flex justify-center gap-4 mt-6">
+
+            <div className="flex justify-center gap-8">
               <button
                 onClick={handleRejectCall}
-                className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md shadow-sm transition"
+                className="w-16 h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 transform hover:scale-105"
+                title="Decline"
               >
-                <PhoneOff className="w-4 h-4" />
-                Decline
+                <PhoneOff size={24} />
               </button>
+
               <button
                 onClick={handleAcceptCall}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md shadow-sm transition"
+                className="w-16 h-16 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 transform hover:scale-105"
+                title="Accept"
               >
-                <Phone className="w-4 h-4" />
-                Accept
+                <Phone size={20} />
               </button>
             </div>
           </div>

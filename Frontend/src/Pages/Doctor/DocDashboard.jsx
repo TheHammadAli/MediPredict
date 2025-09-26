@@ -33,7 +33,7 @@ const DocDashboard = () => {
      }`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
+    <div className="min-h-screen flex flex-col bg-gray-50 font-sans overflow-x-hidden">
       {/* Top Header */}
       <header className="w-full bg-white shadow-sm sticky top-0 z-10 flex justify-between items-center px-6 py-4">
         <div className="flex items-center gap-2">
@@ -99,3 +99,4 @@ const DocDashboard = () => {
 };
 
 export default DocDashboard;
+

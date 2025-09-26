@@ -78,7 +78,13 @@ const getAppointmentsForDoctor = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid or missing doctor ID." });
     }
 
-    const appointments = await Appointment.find({ doctor: doctorId })
+    // Find the DocProfile using doctorRefId
+    const docProfile = await DoctorProfile.findOne({ doctorRefId: doctorId });
+    if (!docProfile) {
+      return res.status(404).json({ success: false, message: "Doctor profile not found." });
+    }
+
+    const appointments = await Appointment.find({ doctor: docProfile._id })
       .populate("patient", "username email")
       .sort({ appointmentDate: 1 });
 

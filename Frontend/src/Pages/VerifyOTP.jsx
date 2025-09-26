@@ -1,20 +1,21 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import axios from "axios";
-import AppContext from "../Context/AppContext"; // ✅ import context
+import AppContext from "../Context/AppContext";
 
 const VerifyOTP = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setUser } = useContext(AppContext); // ✅ grab setUser
+  const { setUser } = useContext(AppContext);
 
   const storedEmail = localStorage.getItem("pendingEmail");
   const email = location.state?.email || storedEmail || "";
 
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(new Array(6).fill(""));
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const otpRefs = useRef([]);
 
   useEffect(() => {
     if (!email) {
@@ -23,22 +24,34 @@ const VerifyOTP = () => {
     }
   }, [email]);
 
+  const handleOtpChange = (index, value) => {
+    if (value.length > 1) return;
+    const newOtp = [...otp];
+    newOtp[index] = value.replace(/\D/g, '');
+    setOtp(newOtp);
+    if (value && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/verify-otp", {
-        email,
-        otp,
-      });
+      const res = await axios.post("http://localhost:5000/api/auth/verify-otp", { email, otp: otp.join('') });
 
       if (res.data?.token) {
-        // ✅ Set token and user
         localStorage.removeItem("pendingSignup");
         localStorage.removeItem("pendingEmail");
         localStorage.setItem("token", res.data.token);
-        setUser(res.data.user); // ✅ THIS FIXES THE NAVBAR ISSUE
+        setUser(res.data.user);
 
         toast.success("OTP Verified! Account created.");
         navigate("/dashboard");
@@ -56,9 +69,7 @@ const VerifyOTP = () => {
   const handleResendOTP = async () => {
     setResending(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/resend-otp", {
-        email,
-      });
+      const res = await axios.post("http://localhost:5000/api/auth/resend-otp", { email });
       toast.success(res.data?.msg || "OTP resent.");
     } catch (err) {
       toast.error(err.response?.data?.msg || "Failed to resend OTP.");
@@ -68,52 +79,69 @@ const VerifyOTP = () => {
   };
 
   return (
-   <div className="flex items-center justify-center min-h-screen bg-white px-4">
-  <div className="w-full max-w-sm bg-white border border-gray-200 rounded-xl shadow-lg p-6">
-    <h2 className="text-center text-2xl font-semibold text-gray-800 mb-2">Enter OTP</h2>
-    <p className="text-center text-sm text-gray-500 mb-6">
-      We sent a 6-digit code to your email
-    </p>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="w-full max-w-lg p-8 bg-white rounded-2xl shadow-2xl border border-gray-200">
+        <div className="text-center mb-8">
+          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Verify Your Email</h2>
+          <p className="text-gray-600">
+            We sent a 6-digit verification code to <span className="font-semibold text-blue-600">{email}</span>
+          </p>
+        </div>
 
-    <form onSubmit={handleVerifyOTP} className="space-y-5">
-      {/* OTP Input */}
-      <input
-        type="text"
-        value={otp}
-        onChange={(e) => setOtp(e.target.value.trim())}
-        maxLength={6}
-        inputMode="numeric"
-        pattern="\d{6}"
-        placeholder="------"
-        className="w-full text-center tracking-[0.5em] text-2xl font-semibold text-gray-700 bg-gray-100 rounded-md border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+        <form onSubmit={handleVerifyOTP} className="space-y-6">
+          <div className="flex justify-center space-x-3">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => (otpRefs.current[index] = el)}
+                type="text"
+                value={digit}
+                onChange={(e) => handleOtpChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                maxLength={1}
+                inputMode="numeric"
+                className="w-12 h-12 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 bg-gray-50 hover:bg-white"
+                required
+              />
+            ))}
+          </div>
 
-      {/* Verify Button */}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white text-base font-medium py-3 rounded-md transition disabled:opacity-50"
-      >
-        {loading ? "Verifying..." : "Verify"}
-      </button>
+          <button
+            type="submit"
+            disabled={loading || otp.some(d => !d)}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+          >
+            {loading ? (
+              <span>
+                Verify Code
+                <span className="inline-block animate-bounce">.</span>
+                <span className="inline-block animate-bounce" style={{ animationDelay: '0.1s' }}>.</span>
+                <span className="inline-block animate-bounce" style={{ animationDelay: '0.2s' }}>.</span>
+              </span>
+            ) : (
+              "Verify Code"
+            )}
+          </button>
 
-      {/* Resend Button */}
-      <button
-        type="button"
-        onClick={handleResendOTP}
-        disabled={resending}
-        className="w-full text-blue-600 hover:text-blue-700 text-sm font-medium transition disabled:opacity-40"
-      >
-        {resending ? "Resending..." : "Resend OTP"}
-      </button>
-    </form>
-
-    <p className="text-center text-xs text-gray-400 mt-6">
-      Didn’t receive the code? Check spam or try resending.
-    </p>
-  </div>
-</div>
-
+          <div className="text-center">
+            <p className="text-sm text-gray-500 mb-2">Didn't receive the code?</p>
+            <button
+              type="button"
+              onClick={handleResendOTP}
+              disabled={resending}
+              className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 disabled:opacity-50"
+            >
+              {resending ? "Resending..." : "Resend Code"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 

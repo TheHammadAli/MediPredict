@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import AppointmentContext from "../../Context/AppointmentContext";
 import AppContext from "../../Context/AppContext";
 import { toast } from "sonner";
+import SlideInOnScroll from "../../Components/SlideInOnScroll";
 
 const PatientAppointments = () => {
   const {
@@ -53,26 +54,36 @@ const PatientAppointments = () => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto py-12 px-6">
-      <h2 className="text-3xl font-bold text-blue-500 text-center mb-10">
-        My Appointments
-      </h2>
+    <div className="overflow-x-hidden">
+      <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <SlideInOnScroll direction="up">
+            <h2 className="text-3xl md:text-5xl font-bold text-blue-600 text-center mb-6">
+              My Appointments
+            </h2>
+            <p className="text-xl text-gray-600 max-w-xl mx-auto text-center mb-10">
+              Manage your upcoming appointments and consultations with ease.
+            </p>
+          </SlideInOnScroll>
 
       {loading ? (
-        <p className="text-center text-gray-500 italic">Loading appointments...</p>
+        <SlideInOnScroll direction="up">
+          <p className="text-center text-gray-500 italic">Loading appointments...</p>
+        </SlideInOnScroll>
       ) : visibleAppointments.length === 0 ? (
-        <p className="text-center text-gray-400 italic">No appointments booked yet.</p>
+        <SlideInOnScroll direction="up">
+          <p className="text-center text-gray-400 italic">No appointments booked yet.</p>
+        </SlideInOnScroll>
       ) : (
-        <div className="grid gap-6">
-          {visibleAppointments.map((appt) => (
-            <div
-              key={appt._id}
-              className="relative flex flex-col sm:flex-row bg-white rounded-2xl shadow-md hover:shadow-lg transition-all overflow-hidden border-l-4"
-              style={{
-                borderColor:
-                  appt.paymentStatus === "paid" ? "#16a34a" : "#3B82F6", // green or amber
-              }}
-            >
+        <div className="grid gap-8">
+          {visibleAppointments.map((appt, index) => (
+            <SlideInOnScroll key={appt._id} direction={index % 2 === 0 ? "up" : "up"}>
+              <div
+                className="relative flex flex-col sm:flex-row bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden border border-gray-100"
+                style={{
+                  borderLeft: `4px solid ${appt.paymentStatus === "paid" ? "#16a34a" : "#3B82F6"}`,
+                }}
+              >
               {/* Doctor Image */}
               <div className="flex-shrink-0 p-5 flex items-center justify-center">
                 <img
@@ -133,7 +144,7 @@ const PatientAppointments = () => {
                 {appt.paymentStatus !== "paid" && (
                   <button
                     onClick={() => handlePay(appt._id)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm"
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:scale-105 hover:shadow-lg transition-all duration-300"
                   >
                     Pay Now
                   </button>
@@ -146,6 +157,7 @@ const PatientAppointments = () => {
                 </button>
               </div>
             </div>
+           </SlideInOnScroll>
           ))}
         </div>
       )}
@@ -178,6 +190,8 @@ const PatientAppointments = () => {
           </div>
         </div>
       )}
+        </div>
+      </section>
     </div>
   );
 };

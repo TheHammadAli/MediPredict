@@ -135,6 +135,48 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Forgot Password
+  const forgotPassword = async (data) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await axios.post(`${BASE_URL}/forgot-password`, data);
+      setLoading(false);
+      return { success: true, data: res.data };
+    } catch (err) {
+      const errorMsg = err.response?.data?.msg || "Failed to send reset link.";
+      console.error("❌ Forgot Password Error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      setLoading(false);
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  };
+
+  // Change Password
+  const changePassword = async (data) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await axios.post(`${BASE_URL}/change-password`, data);
+      setLoading(false);
+      return { success: true, data: res.data };
+    } catch (err) {
+      const errorMsg = err.response?.data?.msg || "Failed to change password.";
+      console.error("❌ Change Password Error:", errorMsg, {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      setLoading(false);
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  };
+
   // Doctor Signup
   const doctorSignup = async (doctorData) => {
     setLoading(true);
@@ -308,6 +350,8 @@ export const AppProvider = ({ children }) => {
         logout,
         verifyOTP,
         resendOTP,
+        forgotPassword,
+        changePassword,
         doctorSignup,
         doctorLogin,
         doctorVerifyOTP,

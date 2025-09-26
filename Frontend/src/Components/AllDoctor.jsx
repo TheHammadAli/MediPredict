@@ -4,6 +4,8 @@ import AppointmentContext from "../Context/AppointmentContext";
 import AppContext from "../Context/AppContext";
 import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router-dom";
+import SlideInOnScroll from "./SlideInOnScroll";
+import { FaArrowRight } from "react-icons/fa";
 
 // 🔹 Helper function to get remaining dates grouped by weekday
 const getRemainingDatesGroupedByWeekday = (daysArray) => {
@@ -11,6 +13,10 @@ const getRemainingDatesGroupedByWeekday = (daysArray) => {
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
   const todayDate = today.getDate();
+  const nowHours = today.getHours();
+  const nowMinutes = today.getMinutes();
+  const nowTime = nowHours + nowMinutes / 60;
+  const endTime = 21; // 9 PM
 
   const dayNameToIndex = {
     Sunday: 0,
@@ -28,10 +34,28 @@ const getRemainingDatesGroupedByWeekday = (daysArray) => {
     const targetDay = dayNameToIndex[dayName];
     const matchedDates = [];
 
-    const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    for (let d = todayDate + 1; d <= lastDay; d++) {
+    // Current month
+    const lastDayCurrent = new Date(currentYear, currentMonth + 1, 0).getDate();
+    for (let d = todayDate; d <= lastDayCurrent; d++) {
       const localDate = new Date(currentYear, currentMonth, d);
+      if (localDate.getDay() === targetDay) {
+        if (d === todayDate && nowTime > endTime) {
+          // Skip today's date if time has passed 9 PM
+        } else {
+          const yyyy = localDate.getFullYear();
+          const mm = String(localDate.getMonth() + 1).padStart(2, "0");
+          const dd = String(localDate.getDate()).padStart(2, "0");
+          matchedDates.push(`${yyyy}-${mm}-${dd}`);
+        }
+      }
+    }
+
+    // Next month
+    const nextMonth = currentMonth + 1;
+    const nextYear = nextMonth > 11 ? currentYear + 1 : currentYear;
+    const lastDayNext = new Date(nextYear, nextMonth + 1, 0).getDate();
+    for (let d = 1; d <= lastDayNext; d++) {
+      const localDate = new Date(nextYear, nextMonth, d);
       if (localDate.getDay() === targetDay) {
         const yyyy = localDate.getFullYear();
         const mm = String(localDate.getMonth() + 1).padStart(2, "0");
@@ -270,154 +294,199 @@ const AllDoctor = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 overflow-x-hidden">
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar */}
-        <aside className="w-full lg:w-48 shrink-0 mb-4 lg:mb-0">
-          <ul className="space-y-3">
-            {specialties.map((spec) => (
-              <li key={spec}>
-                <button
-                  onClick={() => setSelectedSpeciality(spec)}
-                  className={`w-full px-3 py-2 rounded-full border transition text-left text-sm ${
-                    selectedSpeciality === spec
-                      ? "bg-blue-500 text-white border-blue-500"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50"
-                  }`}
-                >
-                  {spec}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </aside>
+    <div className="overflow-x-hidden">
+      {/* Doctors Section */}
+      <section className="py-15 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Sidebar */}
+            <aside className="w-full lg:w-64 shrink-0 pb-10 lg:pb-5">
+              <SlideInOnScroll direction="left">
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Specialties</h3>
+                  <ul className="space-y-3">
+                    {specialties.map((spec) => (
+                      <li key={spec}>
+                        <button
+                          onClick={() => setSelectedSpeciality(spec)}
+                          className={`w-full px-4 py-4 rounded-xl border transition text-left text-sm font-medium ${
+                            selectedSpeciality === spec
+                              ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white border-transparent"
+                              : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-300"
+                          }`}
+                        >
+                          {spec}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </SlideInOnScroll>
+            </aside>
 
-        {/* Doctor Grid */}
-        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full">
-          {filteredDoctors.length > 0 ? (
-            filteredDoctors.map((doc) => (
-              <div
-                key={doc._id}
-                onClick={() => {
-                  if (!user || !user._id) {
-                    toast.error("Please sign up to book a doctor.");
-                    navigate("/signup");
-                    return;
-                  }
-                  setSelectedDoctor(doc);
-                  setShowModal(true);
-                }}
-                className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg hover:scale-[1.02] transition-transform duration-300 ease-in-out cursor-pointer overflow-hidden h-[260px]"
-              >
-                <div className="w-full h-40 overflow-hidden">
-                  <img
-                    src={doc.imageUrl}
-                    alt={doc.name}
-                    className="w-full h-full object-cover"
-                  />
+            {/* Doctor Grid */}
+            <div className="flex-1 mt-6">
+              {filteredDoctors.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredDoctors.map((doc, index) => (
+                    <SlideInOnScroll key={doc._id} direction={index % 2 === 0 ? "up" : "up"}>
+                      <div
+                        onClick={() => {
+                          if (!user || !user._id) {
+                            toast.error("Please sign up to book a doctor.");
+                            navigate("/signup");
+                            return;
+                          }
+                          setSelectedDoctor(doc);
+                          setShowModal(true);
+                        }}
+                        className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer overflow-hidden border border-gray-100 group"
+                      >
+                        <div className="relative">
+                          <img
+                            src={doc.imageUrl}
+                            alt={doc.name}
+                            className="w-full h-48 object-cover transition duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                        <div className="p-6">
+                          <div className="flex items-center justify-between mb-3">
+                            <span
+                              className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                isDoctorAvailableNow(doc)
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              ● {isDoctorAvailableNow(doc) ? "Available Now" : "Not Available"}
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-bold text-gray-900 mb-2">
+                            Dr. {doc.name}
+                          </h3>
+                          <p className="text-sm text-gray-600 mb-3">{doc.speciality}</p>
+                          <div className="flex items-center text-blue-600 font-semibold group-hover:translate-x-1 transition-transform duration-300">
+                            Book Appointment
+                            <FaArrowRight className="ml-2" />
+                          </div>
+                        </div>
+                      </div>
+                    </SlideInOnScroll>
+                  ))}
                 </div>
-                <div className="px-3 py-2">
-                  <p
-                    className={`text-xs font-medium mb-1 ${
-                      isDoctorAvailableNow(doc)
-                        ? "text-green-600"
-                        : "text-red-500"
-                    }`}
-                  >
-                    ● {isDoctorAvailableNow(doc) ? "Available Now" : "Not Available"}
-                  </p>
-                  <h3 className="text-sm font-semibold text-gray-900 leading-tight">
-                    Dr. {doc.name}
-                  </h3>
-                  <p className="text-xs text-gray-500">{doc.speciality}</p>
+              ) : (
+                <div className="text-center">
+                  <SlideInOnScroll direction="up">
+                    <p className="text-xl text-gray-500">No doctors found.</p>
+                  </SlideInOnScroll>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="col-span-full text-gray-500 text-center">
-              No doctors found.
-            </p>
-          )}
-        </section>
-      </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Main Doctor Modal */}
       {showModal && selectedDoctor && (
-        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-md overflow-y-auto scrollbar-hide px-4 py-10">
-          <div className="bg-white rounded-2xl max-w-4xl mx-auto shadow-xl relative">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md overflow-y-auto px-4 py-10">
+          <div className="bg-white rounded-3xl max-w-4xl mx-auto shadow-2xl relative">
             {/* Close Button */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-red-500 text-2xl font-bold"
+              className="absolute top-6 right-6 text-gray-500 hover:text-red-500 text-3xl font-bold z-10"
             >
               ×
             </button>
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 border-b p-6 bg-gradient-to-r from-blue-50 to-white rounded-t-2xl">
-              <img
-                src={selectedDoctor.imageUrl}
-                alt={selectedDoctor.name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
-              />
-              <div className="text-center sm:text-left">
-                <h2 className="text-2xl font-bold text-blue-700">
-                  Dr. {selectedDoctor.name}
-                </h2>
-                <p className="text-sm text-gray-500">{selectedDoctor.speciality}</p>
-                <span
-                  className={`text-xs font-medium mt-1 inline-block rounded px-2 py-1 ${
-                    isDoctorAvailableNow(selectedDoctor)
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
-                  ● {isDoctorAvailableNow(selectedDoctor) ? "Available Now" : "Not Available"}
-                </span>
+            <div className="relative bg-gradient-to-r from-blue-500 via-indigo-400 to-purple-300 rounded-t-3xl p-8 text-white">
+              <div className="absolute inset-0 bg-black/10 rounded-t-3xl"></div>
+              <div className="relative flex flex-col sm:flex-row items-center gap-6">
+                <img
+                  src={selectedDoctor.imageUrl}
+                  alt={selectedDoctor.name}
+                  className="w-32 h-32 rounded-full object-cover border-4 border-white/20 shadow-xl"
+                />
+                <div className="text-center sm:text-left">
+                  <h2 className="text-3xl font-bold mb-2">
+                    Dr. {selectedDoctor.name}
+                  </h2>
+                  <p className="text-lg text-blue-100 mb-2">{selectedDoctor.speciality}</p>
+                  <span
+                    className={`text-sm font-semibold px-4 py-2 rounded-full ${
+                      isDoctorAvailableNow(selectedDoctor)
+                        ? "bg-green-500/20 text-green-100 border border-green-400/30"
+                        : "bg-red-500/20 text-red-100 border border-red-400/30"
+                    }`}
+                  >
+                    ● {isDoctorAvailableNow(selectedDoctor) ? "Available Now" : "Not Available"}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Info Section */}
-            <div className="p-6 text-sm text-gray-700">
-              <p><strong>Experience:</strong> {selectedDoctor.experience}</p>
-              <p><strong>Fees:</strong> ${selectedDoctor.fees}</p>
-              <p><strong>Timing:</strong> {selectedDoctor.timing}</p>
-              <p><strong>Available Days:</strong> {selectedDoctor.daysAvailable?.join(", ")}</p>
-              <p className="mt-2"><strong>About:</strong> {selectedDoctor.about || "No description provided."}</p>
+            <div className="p-8 text-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <p className="text-sm font-semibold text-blue-600">Experience</p>
+                  <p className="text-gray-600">{selectedDoctor.experience}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-600">Fees</p>
+                  <p className="text-gray-600">${selectedDoctor.fees}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-600">Timing</p>
+                  <p className="text-gray-600">{selectedDoctor.timing}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-600">Available Days</p>
+                  <p className="text-gray-600">{selectedDoctor.daysAvailable?.join(", ")}</p>
+                </div>
+              </div>
+              <div className="mb-6">
+                <p className="text-sm font-semibold text-blue-600 mb-2">About</p>
+                <p className="text-gray-600 leading-relaxed">{selectedDoctor.about || "No description provided."}</p>
+              </div>
 
               {/* Day Selection */}
-              <div className="flex flex-wrap gap-2 mt-4">
-                {selectedDoctor.daysAvailable?.map((day, i) => {
-                  const available = isDoctorAvailableNow(selectedDoctor);
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => handleDaySelection(day)}
-                      disabled={!available}
-                      className={`px-3 py-1 rounded-full border text-sm font-medium transition ${
-                        activeDay === day
-                          ? "bg-blue-600 text-white"
-                          : !available
-                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : "bg-gray-100 text-gray-700 hover:bg-blue-50"
-                      }`}
-                    >
-                      {day}
-                    </button>
-                  );
-                })}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-blue-600 mb-4">Select Day</h3>
+                <div className="flex flex-wrap gap-3">
+                  {selectedDoctor.daysAvailable?.map((day, i) => {
+                    const available = isDoctorAvailableNow(selectedDoctor);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleDaySelection(day)}
+                        disabled={!available}
+                        className={`px-4 py-2 rounded-xl border text-sm font-semibold transition ${
+                          activeDay === day
+                            ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white border-transparent"
+                            : !available
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-300"
+                            : "bg-gray-50 text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-300"
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Date and Time Dropdowns */}
               {availableDates.length > 0 && selectedDoctor.timing && activeDay && (
-                <div className="mt-4 flex flex-col md:flex-row gap-4 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   {/* Date Dropdown */}
-                  <div className="w-full md:w-1/2">
-                    <label className="text-sm font-medium text-gray-700">Select Date</label>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">Select Date</label>
                     <select
                       value={selectedDate}
                       onChange={handleDateChange}
-                      className="w-full mt-1 p-2 border rounded-lg bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300"
                     >
                       <option value="">Choose a date</option>
                       {availableDates.map((date, idx) => (
@@ -429,12 +498,12 @@ const AllDoctor = () => {
                   </div>
 
                   {/* Time Dropdown */}
-                  <div className="w-full md:w-1/2">
-                    <label className="text-sm font-medium text-gray-700">Select Time</label>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">Select Time</label>
                     <select
                       value={activeTime || ""}
                       onChange={(e) => setActiveTime(e.target.value)}
-                      className="w-full mt-1 p-2 border rounded-lg bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300"
                     >
                       <option value="">Choose a time</option>
                       {(() => {
@@ -482,55 +551,56 @@ const AllDoctor = () => {
 
               {/* Book Button */}
               <button
-                className="mt-4 w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center justify-center gap-2"
                 onClick={handleBook}
                 disabled={!selectedDate || !activeTime}
               >
                 Book Appointment
+                <FaArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
               </button>
 
               {/* Review Section */}
-              <div className="mt-8 p-6 rounded-xl bg-gray-50 shadow-inner">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">⭐ Patient Reviews</h3>
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="bg-blue-700 text-white px-4 py-2 rounded text-lg font-bold">5/5</div>
-                  <p className="text-sm text-gray-600">Based on 286 reviews</p>
+              <div className="mt-8 p-8 rounded-2xl bg-gradient-to-r from-gray-50 to-white shadow-lg border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">⭐ Patient Reviews</h3>
+                <div className="flex items-center space-x-4 mb-8">
+                  <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl text-xl font-bold">5/5</div>
+                  <p className="text-gray-600 font-medium">Based on 286 reviews</p>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <div className="flex justify-between text-sm font-medium mb-1">
-                      <span>Patient Satisfaction</span>
-                      <span>4.8</span>
+                    <div className="flex justify-between text-sm font-semibold mb-2">
+                      <span className="text-gray-900">Patient Satisfaction</span>
+                      <span className="text-gray-700">4.8</span>
                     </div>
-                    <div className="w-full bg-gray-200 h-2 rounded-full">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: "96%" }}></div>
+                    <div className="w-full bg-gray-200 h-3 rounded-full">
+                      <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full" style={{ width: "96%" }}></div>
                     </div>
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm font-medium mb-1">
-                      <span>Diagnosis</span>
-                      <span>4.7</span>
+                    <div className="flex justify-between text-sm font-semibold mb-2">
+                      <span className="text-gray-900">Diagnosis</span>
+                      <span className="text-gray-700">4.7</span>
                     </div>
-                    <div className="w-full bg-gray-200 h-2 rounded-full">
-                      <div className="bg-blue-400 h-2 rounded-full" style={{ width: "94%" }}></div>
+                    <div className="w-full bg-gray-200 h-3 rounded-full">
+                      <div className="bg-gradient-to-r from-blue-400 to-cyan-600 h-3 rounded-full" style={{ width: "94%" }}></div>
                     </div>
                   </div>
                 </div>
 
                 {/* Comments */}
-                <div className="mt-6">
-                  <h4 className="font-semibold mb-2 text-gray-700">Patient Feedback</h4>
-                  <ul className="space-y-2 text-sm text-gray-600 max-h-48 overflow-y-auto">
-                    <li className="bg-white p-3 rounded shadow-sm">
-                      "Dr. Smith was very attentive and helpful!"
-                    </li>
-                    <li className="bg-white p-3 rounded shadow-sm">
-                      "Quick diagnosis and very accurate."
-                    </li>
-                    <li className="bg-white p-3 rounded shadow-sm">
-                      "I loved the video consultation. Smooth experience."
-                    </li>
-                  </ul>
+                <div className="mt-8">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">Patient Feedback</h4>
+                  <div className="space-y-4 max-h-64 overflow-y-auto">
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                      <p className="text-gray-700 italic">"Dr. Smith was very attentive and helpful!"</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                      <p className="text-gray-700 italic">"Quick diagnosis and very accurate."</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                      <p className="text-gray-700 italic">"I loved the video consultation. Smooth experience."</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

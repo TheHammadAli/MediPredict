@@ -32,6 +32,8 @@ import BlogDetail from "./Components/BlogDetail";
 import TermsAndServices from "./Components/TermsAndServices";
 import PrivacyPolicy from "./Components/PrivacyPolicy";
 import PatientChatList from "./Pages/Patient/PateintChatList";
+import ForgetPassword from "./Pages/ForgetPassword";
+import ChangePassword from "./Pages/ChangePassword";
 
 const App = () => {
   const location = useLocation();
@@ -71,9 +73,11 @@ const App = () => {
     "/docDashboard/upload-blog",
     "/signup",
     "/login",
+    "/forgot-password",
+    "/change-password",
     "/doctor-signup",
     "/doctor-login",
-   
+
     "/patient-chat",
     "/docverify-otp",
     "/verify-otp",
@@ -120,6 +124,8 @@ const App = () => {
         <Route path="/messages/:docid" element={<Messages />} /> {/* Add dynamic route */}
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgetPassword />} />
+        <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/all-blogs" element={<AllBlogs />} />
         <Route path="/blogs/:id" element={<BlogDetail />} />
         <Route path="/terms-of-service" element={<TermsAndServices />} />

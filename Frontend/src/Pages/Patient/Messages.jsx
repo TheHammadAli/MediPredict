@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { jwtDecode } from "jwt-decode";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faComment, faMicrophone, faPhone, faVideo, faSmile, faPaperclip } from "@fortawesome/free-solid-svg-icons";
-import { Send, Video as VideoIcon, Monitor, PhoneOff, Mic, MicOff, History } from "lucide-react";
+import { Send, Video as VideoIcon, Monitor, PhoneOff, Phone, Mic, MicOff, History, Paperclip, Smile } from "lucide-react";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import socket from "../../Socket/socket";
@@ -102,7 +102,7 @@ useEffect(() => {
     const fetchDoctors = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:5000/api/appointments/chat-doctors/${patientId}`);
+        const res = await fetch(`https://backend-z2yb.onrender.com/api/appointments/chat-doctors/${patientId}`);
         const data = await res.json();
         if (data.success) setDoctors(data.doctors);
       } catch (err) {
@@ -256,6 +256,14 @@ useEffect(() => {
     };
     loadChat();
   }, [selectedDoctor, patientId]);
+
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.muted = true;
+      localVideoRef.current.play().catch(console.error);
+    }
+  }, [localStream]);
 
   useEffect(() => {
     let interval;
@@ -414,7 +422,7 @@ useEffect(() => {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/api/chat/send", {
+      const res = await fetch("https://backend-z2yb.onrender.com/api/chat/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -474,7 +482,7 @@ useEffect(() => {
       };
 
       try {
-        const res = await fetch("http://localhost:5000/api/chat/send", {
+        const res = await fetch("https://backend-z2yb.onrender.com/api/chat/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -506,7 +514,7 @@ useEffect(() => {
     formData.append("timestamp", new Date().toISOString());
 
     try {
-      const res = await fetch("http://localhost:5000/api/chat/send-file", {
+      const res = await fetch("https://backend-z2yb.onrender.com/api/chat/send-file", {
         method: "POST",
         body: formData,
       });
@@ -748,7 +756,7 @@ useEffect(() => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-medium text-gray-900 truncate text-sm">
-                          {doc.name}
+                          Dr. {doc.name}
                         </h3>
                         <span className="text-xs text-gray-500 flex-shrink-0">
                           {doc.time || "3h"}
@@ -787,7 +795,7 @@ useEffect(() => {
                   )}
                 </div>
                 <div>
-                  <h2 className="font-bold text-lg text-gray-800">{selectedDoctor.name}</h2>
+                  <h2 className="font-bold text-lg text-gray-800">Dr. {selectedDoctor.name}</h2>
                   <p className="text-sm text-gray-500 flex items-center gap-2">
                     {selectedDoctor.speciality || "Doctor"}
                     {onlineDoctors[selectedDoctor._id] === "online" && (
@@ -799,32 +807,32 @@ useEffect(() => {
               <div className="flex gap-4">
                 <button
                   onClick={() => setShowCallHistory(true)}
-                  className="p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200"
+                  className="p-4 bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-700 rounded-full transition-all duration-200 shadow-md"
                   title="Call History"
                 >
                   <History size={20} />
                 </button>
                 <button
                   onClick={() => onlineDoctors[selectedDoctor._id] === "online" && handleStartCall("audio")}
-                  className={`p-3 rounded-full transition-all duration-200 ${
+                  className={`p-4 rounded-full transition-all duration-200 shadow-md ${
                     onlineDoctors[selectedDoctor._id] === "online"
-                      ? "text-gray-600 hover:text-green-600 hover:bg-green-50"
-                      : "text-gray-400 cursor-not-allowed"
+                      ? "bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
                   title={onlineDoctors[selectedDoctor._id] === "online" ? "Audio Call" : "Doctor is offline"}
                 >
-                  <FontAwesomeIcon icon={faPhone} size="lg" />
+                  <Phone size={20} />
                 </button>
                 <button
                   onClick={() => onlineDoctors[selectedDoctor._id] === "online" && handleStartCall("video")}
-                  className={`p-3 rounded-full transition-all duration-200 ${
+                  className={`p-4 rounded-full transition-all duration-200 shadow-md ${
                     onlineDoctors[selectedDoctor._id] === "online"
-                      ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                      : "text-gray-400 cursor-not-allowed"
+                      ? "bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
                   title={onlineDoctors[selectedDoctor._id] === "online" ? "Video Call" : "Doctor is offline"}
                 >
-                  <FontAwesomeIcon icon={faVideo} size="lg" />
+                  <VideoIcon size={20} />
                 </button>
               </div>
             </div>
@@ -852,14 +860,6 @@ useEffect(() => {
                   return (
                     <div key={msg._id} className={`flex ${isSender ? "justify-end" : "justify-start"} group`}>
                       <div className={`flex items-end gap-3 max-w-[70%] ${isSender ? "flex-row-reverse" : "flex-row"}`}>
-                        {!isSender && showAvatar && (
-                          <img
-                            src={selectedDoctor.imageUrl || "/default-doctor.png"}
-                            className="w-8 h-8 rounded-full object-cover shadow-sm border border-white"
-                            alt={selectedDoctor.name}
-                          />
-                        )}
-                        {!isSender && !showAvatar && <div className="w-8" />}
 
                         <div className="flex flex-col">
                           {showTime && (
@@ -946,91 +946,56 @@ useEffect(() => {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white border-t border-gray-200">
-              <div className="relative">
-                <div className="flex items-end gap-3 p-4 bg-white border border-gray-200 rounded-3xl shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 focus-within:shadow-lg transition-all duration-200">
-                  <button
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-150"
-                    title="Add emoji"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                  </button>
-
-                  <div className="flex-1 min-w-0">
-                    <textarea
-                      rows="1"
-                      className="w-full bg-transparent focus:outline-none text-sm text-gray-700 placeholder:text-gray-400 resize-none max-h-32"
-                      placeholder="Type a message..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSend();
-                        }
-                      }}
-                      style={{ minHeight: "20px" }}
-                    />
-                  </div>
-
-                  <label className="flex-shrink-0 cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-150">
-                    <input type="file" className="hidden" onChange={handleFileSelect} />
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                    </svg>
-                  </label>
-
-                  <button
-                    onClick={handleSend}
-                    disabled={!newMessage.trim()}
-                    className={`flex-shrink-0 w-10 h-10 rounded-full transition-all duration-200 transform hover:scale-105 flex items-center justify-center ${
-                      newMessage.trim()
-                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    }`}
-                    title="Send message"
-                  >
-                    <Send size={18} className={newMessage.trim() ? "rotate-0" : "rotate-45"} />
-                  </button>
+            <div className="w-full p-4 relative z-10 bg-white/80 backdrop-blur-sm border-t border-gray-200">
+              {showEmojiPicker && (
+                <div className="absolute bottom-20 left-4 z-30">
+                  <Picker
+                    data={data}
+                    onEmojiSelect={(emoji) => {
+                      setNewMessage(prev => prev + emoji.native);
+                      setShowEmojiPicker(false);
+                    }}
+                    theme="light"
+                  />
                 </div>
-
-                {showEmojiPicker && (
-                  <div className="absolute bottom-20 left-4 z-10 shadow-2xl rounded-2xl overflow-hidden border border-gray-200">
-                    <Picker
-                      data={data}
-                      onEmojiSelect={(emoji) => {
-                        setNewMessage(prev => prev + emoji.native);
-                        setShowEmojiPicker(false);
-                      }}
-                      theme="light"
-                      previewPosition="none"
-                      skinTonePosition="none"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between mt-3 px-1">
-                <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Enter</kbd>
-                    <span>to send</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Shift</kbd>
-                    <span>+</span>
-                    <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Enter</kbd>
-                    <span>for new line</span>
-                  </span>
-                </div>
-                {newMessage.length > 0 && (
-                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                    {newMessage.length}
-                  </span>
-                )}
+              )}
+              <div className="flex items-center bg-gray-100 rounded-full shadow-md px-4 py-3">
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <button
+                  className="text-gray-500 hover:text-blue-500 mr-3 transition"
+                  onClick={() => fileInputRef.current.click()}
+                  title="Attach file"
+                >
+                  <Paperclip size={20} />
+                </button>
+                <button
+                  className="text-gray-500 hover:text-yellow-500 mr-3 transition"
+                  onClick={() => setShowEmojiPicker((prev) => !prev)}
+                  title="Emoji"
+                >
+                  <Smile size={20} />
+                </button>
+                <input
+                  type="text"
+                  className="flex-grow bg-transparent focus:outline-none text-sm px-2"
+                  placeholder="Type your message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                />
+                <button
+                  onClick={handleSend}
+                  className="w-10 h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full ml-2 shadow-md"
+                  disabled={!newMessage.trim()}
+                >
+                  <Send size={18} />
+                </button>
               </div>
             </div>
           </>
@@ -1092,7 +1057,7 @@ useEffect(() => {
               </div>
             </div>
 
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">{selectedDoctor.name}</h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Dr. {selectedDoctor.name}</h3>
             <p className="text-gray-500 mb-4 animate-pulse font-medium">Audio Call • {callStatus}</p>
             {callStatus === "Connected" && (
               <p className="text-gray-600 mb-4 font-mono text-lg">{callDuration}</p>
@@ -1146,7 +1111,7 @@ useEffect(() => {
 
             <div className="absolute top-6 left-6 right-6 flex justify-between items-center">
               <div className="bg-black/40 backdrop-blur-lg text-white px-4 py-2 rounded-2xl">
-                <h3 className="font-semibold">{selectedDoctor?.name || "Doctor"}</h3>
+                <h3 className="font-semibold">{selectedDoctor?.name ? `Dr. ${selectedDoctor.name}` : "Doctor"}</h3>
                 <p className="text-sm opacity-75">Video Call • {callStatus}</p>
               </div>
               <div className="flex gap-3">
@@ -1224,36 +1189,52 @@ useEffect(() => {
 
       {/* Incoming Call Modal */}
       {incomingCall && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
-          <div className="bg-white/95 backdrop-blur-lg rounded-3xl px-8 py-10 shadow-2xl w-[380px] text-center border border-white/20">
-            <div className="mb-8">
-              <div className="w-20 h-20 mx-auto mb-6 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-fade-in">
+          <div className="bg-white/95 backdrop-blur-lg rounded-3xl p-8 w-[360px] shadow-2xl flex flex-col items-center text-center border border-white/20 relative">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Incoming Call</h2>
-              <p className="text-lg text-gray-600 mb-1">{selectedDoctor?.name || "Doctor"}</p>
-              <p className="text-sm text-gray-500">{incomingCallType === "audio" ? "Audio Call" : "Video Call"}</p>
             </div>
 
-            <div className="flex justify-center gap-6">
+            <div className="relative mb-8 mt-4">
+              {selectedDoctor?.imageUrl ? (
+                <img
+                  src={selectedDoctor.imageUrl}
+                  alt={selectedDoctor.name}
+                  className="w-32 h-32 rounded-full object-cover shadow-2xl ring-4 ring-blue-400/30"
+                />
+              ) : (
+                <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-5xl font-bold rounded-full flex items-center justify-center shadow-2xl">
+                  {selectedDoctor?.name?.charAt(0).toUpperCase() || "D"}
+                </div>
+              )}
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-semibold">ONLINE</span>
+              </div>
+            </div>
+
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Incoming Call</h3>
+            <p className="text-lg text-gray-600 mb-1">Dr. {selectedDoctor?.name || "Doctor"}</p>
+            <p className="text-gray-500 mb-6 animate-pulse font-medium">{incomingCallType === "audio" ? "Audio Call" : "Video Call"} • Ringing...</p>
+
+            <div className="flex items-center justify-center gap-8">
               <button
                 onClick={rejectCall}
-                className="flex flex-col items-center gap-2 px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl shadow-lg transition-all duration-200 transform hover:scale-105"
+                className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-xl text-white transition-all duration-200 transform hover:scale-110"
+                title="Decline Call"
               >
-                <PhoneOff size={24} />
-                <span className="text-sm font-semibold">Decline</span>
+                <PhoneOff size={28} />
               </button>
 
               <button
                 onClick={acceptCall}
-                className="flex flex-col items-center gap-2 px-6 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl shadow-lg transition-all duration-200 transform hover:scale-105"
+                className="w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center shadow-xl text-white transition-all duration-200 transform hover:scale-110"
+                title="Accept Call"
               >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                </svg>
-                <span className="text-sm font-semibold">Accept</span>
+                <Phone size={28} />
               </button>
             </div>
           </div>

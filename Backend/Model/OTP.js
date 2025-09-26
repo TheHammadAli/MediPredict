@@ -12,6 +12,8 @@ const OTPSchema = new mongoose.Schema({
     username: { type: String },
     password: { type: String }, // ✅ match controller
     role: { type: String },
+    userType: { type: String }, // For password reset
+    userId: { type: mongoose.Schema.Types.ObjectId }, // For password reset
   },
 });
 

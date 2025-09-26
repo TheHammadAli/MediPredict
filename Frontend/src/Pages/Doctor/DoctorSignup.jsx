@@ -102,145 +102,239 @@ const DoctorSignup = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 to-white px-4">
-      <div className="w-full max-w-md p-8 bg-white border border-gray-300 rounded-xl shadow-xl">
-        <div className="flex justify-center gap-6 mb-6">
-          <div
-            className="flex flex-col items-center cursor-pointer text-gray-400 hover:text-blue-500"
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50 flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-lg bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-teal-100 p-8 md:p-10 transform transition-all duration-300 hover:shadow-3xl">
+        {/* Role Selector */}
+        <div className="flex justify-center gap-8 mb-8">
+          <button
+            className="flex flex-col items-center p-4 rounded-xl text-gray-400 hover:text-blue-500 hover:bg-gray-50 transition-all duration-200"
             onClick={() => navigate("/signup")}
           >
             <FontAwesomeIcon icon={faUser} size="2x" />
-            <p className="text-sm font-medium mt-1">Patient</p>
-          </div>
-          <div className="flex flex-col items-center text-blue-600 cursor-pointer">
+            <p className="text-sm font-semibold mt-2">Patient</p>
+          </button>
+          <button className="flex flex-col items-center p-4 rounded-xl bg-blue-100 text-blue-600 shadow-md transition-all duration-200">
             <FontAwesomeIcon icon={faStethoscope} size="2x" />
-            <p className="text-sm font-medium mt-1">Doctor</p>
-          </div>
+            <p className="text-sm font-semibold mt-2">Doctor</p>
+          </button>
         </div>
 
-        <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">Doctor Signup</h2>
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Join as Doctor</h2>
+          <p className="text-gray-600">Create your professional account</p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Username */}
-          <div className="relative">
-            <FontAwesomeIcon icon={faUser} className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              value={formData.username}
-              onChange={handleChange}
-              onFocus={() => setFocusedField("username")}
-              onBlur={() => setFocusedField("")}
-              className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-              required
-            />
-            {focusedField === "username" && (
-              <FontAwesomeIcon icon={faPen} className="absolute right-3 top-3 text-blue-500" />
+          <div className="relative group">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+            <div className="relative">
+              <FontAwesomeIcon
+                icon={faUser}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+              />
+              <input
+                type="text"
+                name="username"
+                placeholder="Choose a professional username"
+                value={formData.username}
+                onChange={handleChange}
+                onFocus={() => setFocusedField("username")}
+                onBlur={() => setFocusedField("")}
+                className={`w-full pl-12 pr-4 py-3 rounded-xl border-2 ${
+                  errors.username
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                    : "border-gray-200 focus:border-blue-400 focus:ring-blue-100"
+                } focus:outline-none focus:ring-4 transition-all duration-200 text-gray-700 placeholder-gray-400`}
+                required
+              />
+              {focusedField === "username" && (
+                <FontAwesomeIcon
+                  icon={faPen}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-500 animate-pulse"
+                />
+              )}
+            </div>
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-2 flex items-center">
+                <span className="mr-1">⚠️</span>{errors.username}
+              </p>
             )}
-            {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
           </div>
 
           {/* Email */}
-          <div className="relative">
-            <FontAwesomeIcon icon={faEnvelope} className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              onFocus={() => setFocusedField("email")}
-              onBlur={() => setFocusedField("")}
-              className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-              required
-            />
-            {focusedField === "email" && (
-              <FontAwesomeIcon icon={faPen} className="absolute right-3 top-3 text-blue-500" />
+          <div className="relative group">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <div className="relative">
+              <FontAwesomeIcon
+                icon={faEnvelope}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your professional email"
+                value={formData.email}
+                onChange={handleChange}
+                onFocus={() => setFocusedField("email")}
+                onBlur={() => setFocusedField("")}
+                className={`w-full pl-12 pr-4 py-3 rounded-xl border-2 ${
+                  errors.email
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                    : "border-gray-200 focus:border-blue-400 focus:ring-blue-100"
+                } focus:outline-none focus:ring-4 transition-all duration-200 text-gray-700 placeholder-gray-400`}
+                required
+              />
+              {focusedField === "email" && (
+                <FontAwesomeIcon
+                  icon={faPen}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-500 animate-pulse"
+                />
+              )}
+            </div>
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-2 flex items-center">
+                <span className="mr-1">⚠️</span>{errors.email}
+              </p>
             )}
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
 
           {/* Password */}
-          <div className="relative">
-            <FontAwesomeIcon icon={faLock} className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type={passwordVisible ? "text" : "password"}
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              onFocus={() => setFocusedField("password")}
-              onBlur={() => setFocusedField("")}
-              className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-              required
-            />
-            <FontAwesomeIcon
-              icon={passwordVisible ? faEyeSlash : faEye}
-              className="absolute right-3 top-3 cursor-pointer text-gray-600"
-              onClick={() => setPasswordVisible(!passwordVisible)}
-            />
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+          <div className="relative group">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <div className="relative">
+              <FontAwesomeIcon
+                icon={faLock}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+              />
+              <input
+                type={passwordVisible ? "text" : "password"}
+                name="password"
+                placeholder="Create a secure password"
+                value={formData.password}
+                onChange={handleChange}
+                onFocus={() => setFocusedField("password")}
+                onBlur={() => setFocusedField("")}
+                className={`w-full pl-12 pr-12 py-3 rounded-xl border-2 ${
+                  errors.password
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                    : "border-gray-200 focus:border-blue-400 focus:ring-blue-100"
+                } focus:outline-none focus:ring-4 transition-all duration-200 text-gray-700 placeholder-gray-400`}
+                required
+              />
+              <button
+                type="button"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-500 transition-colors"
+                onClick={() => setPasswordVisible(!passwordVisible)}
+              >
+                <FontAwesomeIcon icon={passwordVisible ? faEyeSlash : faEye} />
+              </button>
+            </div>
+            {formData.password && (
+              <div className="mt-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Password Strength:</span>
+                  <span
+                    className={`font-medium ${
+                      passwordStrength === "Weak"
+                        ? "text-red-500"
+                        : passwordStrength === "Medium"
+                        ? "text-yellow-500"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {passwordStrength}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      passwordStrength === "Weak"
+                        ? "bg-red-500 w-1/3"
+                        : passwordStrength === "Medium"
+                        ? "bg-yellow-500 w-2/3"
+                        : "bg-green-500 w-full"
+                    }`}
+                  ></div>
+                </div>
+              </div>
+            )}
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-2 flex items-center">
+                <span className="mr-1">⚠️</span>{errors.password}
+              </p>
+            )}
           </div>
 
-          {/* Password Strength */}
-          {formData.password && (
-            <p
-              className={`text-sm font-medium mt-1 ${
-                passwordStrength === "Weak"
-                  ? "text-red-500"
-                  : passwordStrength === "Medium"
-                  ? "text-yellow-500"
-                  : "text-green-600"
-              }`}
-            >
-              Password Strength: {passwordStrength}
-            </p>
-          )}
-
           {/* Confirm Password */}
-          <div className="relative">
-            <FontAwesomeIcon icon={faLock} className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type={confirmPasswordVisible ? "text" : "password"}
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              onFocus={() => setFocusedField("confirmPassword")}
-              onBlur={() => setFocusedField("")}
-              className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-              required
-            />
-            <FontAwesomeIcon
-              icon={confirmPasswordVisible ? faEyeSlash : faEye}
-              className="absolute right-3 top-3 cursor-pointer text-gray-600"
-              onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
-            />
+          <div className="relative group">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+            <div className="relative">
+              <FontAwesomeIcon
+                icon={faLock}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+              />
+              <input
+                type={confirmPasswordVisible ? "text" : "password"}
+                name="confirmPassword"
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                onFocus={() => setFocusedField("confirmPassword")}
+                onBlur={() => setFocusedField("")}
+                className={`w-full pl-12 pr-12 py-3 rounded-xl border-2 ${
+                  errors.confirmPassword
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                    : "border-gray-200 focus:border-blue-400 focus:ring-blue-100"
+                } focus:outline-none focus:ring-4 transition-all duration-200 text-gray-700 placeholder-gray-400`}
+                required
+              />
+              <button
+                type="button"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-500 transition-colors"
+                onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+              >
+                <FontAwesomeIcon icon={confirmPasswordVisible ? faEyeSlash : faEye} />
+              </button>
+            </div>
             {errors.confirmPassword && (
-              <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+              <p className="text-red-500 text-sm mt-2 flex items-center">
+                <span className="mr-1">⚠️</span>{errors.confirmPassword}
+              </p>
             )}
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition disabled:opacity-50"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
             disabled={loading}
           >
-            {loading ? "Signing Up..." : "Sign Up"}
+            {loading ? (
+              <span>
+                Sign Up as Doctor
+                <span className="inline-block animate-bounce">.</span>
+                <span className="inline-block animate-bounce" style={{ animationDelay: '0.1s' }}>.</span>
+                <span className="inline-block animate-bounce" style={{ animationDelay: '0.2s' }}>.</span>
+              </span>
+            ) : (
+              "Sign Up as Doctor"
+            )}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Already have an account?{" "}
-          <span
-            onClick={() => navigate("/doctor-login")}
-            className="text-blue-500 font-medium hover:underline cursor-pointer"
-          >
-            Sign in
-          </span>
-        </p>
+        <div className="text-center mt-8">
+          <p className="text-gray-600">
+            Already have an account?{" "}
+            <button
+              onClick={() => navigate("/doctor-login")}
+              className="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition-colors"
+            >
+              Sign in
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );
