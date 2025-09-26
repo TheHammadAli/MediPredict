@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppContext from "./Context/AppContext";
 import Navbar from "./Components/Navbar";
 import Footer from "./Components/Footer";
-import Spinner from "./Components/spinner.jsx";
+import Spinner from "./Components/spinner";
 
 // Pages & Components
 import Dashboard from "./Pages/Patient/Dashboard";
